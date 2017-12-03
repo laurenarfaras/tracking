@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -13,6 +13,7 @@
 
 
 import util
+from util import PriorityQueue
 from game import Agent
 from game import Directions
 from keyboardAgents import KeyboardAgent
@@ -163,4 +164,47 @@ class GreedyBustersAgent(BustersAgent):
             [beliefs for i, beliefs in enumerate(self.ghostBeliefs)
              if livingGhosts[i+1]]
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        # the most likely position of each ghost that has not yet been captured
+        closestGhosts = PriorityQueue()
+        for livingGhost in livingGhostPositionDistributions:
+            pmax = float(-1.0);
+            closest = None;
+            for ghost in livingGhost:
+                if livingGhost[ghost] > float(pmax):
+                    pmax = livingGhost[ghost]
+                    closest = ghost
+
+            closestGhosts.push(closest, self.distancer.getDistance(pacmanPosition, closest))
+
+        # choose an action that minimizes the distance to the closest ghost
+        currClosest = closestGhosts.pop()
+        try:
+            ndist = self.distancer.getDistance(Actions.getSuccessor(pacmanPosition, Directions.NORTH), currClosest)
+        except Exception as e:
+            ndist = float("inf")
+        try:
+            edist = self.distancer.getDistance(Actions.getSuccessor(pacmanPosition, Directions.EAST), currClosest)
+        except Exception as e:
+            edist = float("inf")
+        try:
+            sdist = self.distancer.getDistance(Actions.getSuccessor(pacmanPosition, Directions.SOUTH), currClosest)
+        except Exception as e:
+            sdist = float("inf")
+        try:
+            wdist = self.distancer.getDistance(Actions.getSuccessor(pacmanPosition, Directions.WEST), currClosest)
+        except Exception as e:
+            wdist = float("inf")
+        infinity = float("inf")
+        if (ndist == infinity and edist == infinity and sdist == infinity and wdist == infinity):
+            return Directions.STOP
+        else:
+            closestDist = min(ndist, edist, sdist, wdist)
+            if closestDist == ndist:
+                return Directions.NORTH
+            elif closestDist == edist:
+                return Directions.EAST
+            elif closestDist == sdist:
+                return Directions.SOUTH
+            elif closestDist == wdist:
+                return Directions.WEST
